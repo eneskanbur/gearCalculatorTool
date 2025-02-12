@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/dashboard"
+        android:icon="@drawable/ic_item1"
+        android:title="@string/bottom_navigation_first_item" >
+    </item>
+
+    <item
+        android:id="@+id/spurAndHelicalGearCalculation"
+        android:icon="@drawable/ic_item1"
+        android:title="@string/bottom_navigation_second_item"
+        >
+    </item>
+</menu>

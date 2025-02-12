@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">GearCalculationTool</string>
+    <string name="gear_teeth_number">Diş Sayısı Girin:</string>
+    <string name="ratio_of_movement">Hareket İletim Oranı:</string>
+    <string name="bottom_navigation_first_item">Divizör Hesabı</string>
+    <string name="bottom_navigation_second_item">Düz ve Helis Dişli Hesaplama</string>
 </resources>
