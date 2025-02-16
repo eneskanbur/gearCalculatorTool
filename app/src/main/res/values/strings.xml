@@ -7,4 +7,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="divisorButton">Hesapla</string>
+    <string name="spinnerFirstItem">1/40</string>
+    <string name="spinnerSecondItem">1/80</string>
+    <string name="spinnerThirdItem">1/90</string>
 </resources>

@@ -15,18 +15,18 @@ import android.widget.Spinner
 import android.widget.TextView
 
 class DivisorCalculationFragment : Fragment() {
-    lateinit var editTextGearTeeth: EditText
-    lateinit var spinnerRatioOfMovement: Spinner
-    lateinit var gridLayout: GridLayout
-    lateinit var buttonCalculation: Button
-    var K : Double = 0.0
-    var Z : Double = 0.0
+    private lateinit var editTextGearTeeth: EditText
+    private lateinit var spinnerRatioOfMovement: Spinner
+    private lateinit var gridLayout: GridLayout
+    private lateinit var buttonCalculation: Button
+    private var movementRatio: Double = 0.0
+    private var gearTeethCount: Double = 0.0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_divisor_calculation, container, false)
     }
 
@@ -45,21 +45,19 @@ class DivisorCalculationFragment : Fragment() {
 
         buttonCalculation.setOnClickListener {
             val gearTeethInput = editTextGearTeeth.text.toString()
-            if (gearTeethInput.isNotEmpty() && K != 0.0) {
-                Z = gearTeethInput.toDouble()
-                // Temel oran: K/Z (örneğin 4/9). Buradan 10 adet oransal örnek oluşturacağız:
-                // 1. örnek: K*1 / Z*1, 2. örnek: K*2 / Z*2, …, 10. örnek: K*10 / Z*10
-                val fractions = generateScaledFractions(K.toInt(), Z.toInt(), 10)
+            if (gearTeethInput.isNotEmpty() && movementRatio != 0.0) {
+                gearTeethCount = gearTeethInput.toDouble()
+
+                val fractions = generateScaledFractions(movementRatio.toInt(), gearTeethCount.toInt(), 10)
                 displayFractions(fractions)
             }
         }
 
     }
 
-    fun createSpinnerOptions(spinner: Spinner) {
+    private fun createSpinnerOptions(spinner: Spinner) {
         val spinnerItems = arrayOf("Seçiniz", "1/40", "1/80", "1/90")
 
-        // ArrayAdapter ile Spinner'ı doldur
         val adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
@@ -67,7 +65,6 @@ class DivisorCalculationFragment : Fragment() {
         )
         spinner.adapter = adapter
 
-        // Spinner'da bir öğe seçildiğinde yapılacak işlemleri tanımla
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>,
@@ -75,21 +72,19 @@ class DivisorCalculationFragment : Fragment() {
                 position: Int,
                 id: Long
             ) {
-                // Seçilen öğeyi al
                 val selectedItem = spinnerItems[position]
 
-                // Seçilen öğeye göre işlem yap
                 when (selectedItem) {
-                    "1/40" -> {
-                        K = 40.0
+                    getString(R.string.spinnerFirstItem) -> {
+                        movementRatio = 40.0
                     }
 
-                    "1/80" -> {
-                        K = 80.0
+                    getString(R.string.spinnerSecondItem) -> {
+                        movementRatio = 80.0
                     }
 
-                    "1/90" -> {
-                        K = 90.0
+                    getString(R.string.spinnerThirdItem) -> {
+                        movementRatio = 90.0
                     }
 
                 }
@@ -100,13 +95,28 @@ class DivisorCalculationFragment : Fragment() {
             }
         }
     }
-    private fun generateScaledFractions(numerator: Int, denominator: Int, count: Int = 10): List<Pair<Int, Int>> {
+
+    private fun generateScaledFractions(
+        numerator: Int,
+        denominator: Int,
+        count: Int = 10
+    ): List<Pair<Int, Int>> {
         val scaledFractions = mutableListOf<Pair<Int, Int>>()
+
+        var simplifiedNumerator = numerator
+        var simplifiedDenominator = denominator
+
+        val pair = simplifyFraction(numerator, denominator)
+        simplifiedNumerator = pair.first
+        simplifiedDenominator = pair.second
+
         for (i in 1..count) {
-            scaledFractions.add(Pair(numerator * i, denominator * i))
+            scaledFractions.add(Pair(simplifiedNumerator * i, simplifiedDenominator * i))
         }
         return scaledFractions
     }
+
+
 
     private fun displayFractions(fractions: List<Pair<Int, Int>>) {
         gridLayout.removeAllViews()
@@ -114,14 +124,15 @@ class DivisorCalculationFragment : Fragment() {
         gridLayout.columnCount = 2
 
         fractions.forEachIndexed { index, fraction ->
-            val num = fraction.first
-            val den = fraction.second
-            val wholePart = num / den
-            val remainder = num % den
+            val numerator = fraction.first
+            val denominator = fraction.second
+            val wholePart = numerator / denominator
+            val remainder = numerator % denominator
+
             val fractionText = if (wholePart > 0) {
-                if (remainder > 0) "$wholePart tam $remainder/$den" else "$wholePart"
+                if (remainder > 0) "$wholePart tam $remainder/$denominator" else "$wholePart"
             } else {
-                "$num/$den"
+                "$numerator/$denominator"
             }
 
             val textView = TextView(requireContext())
@@ -141,5 +152,29 @@ class DivisorCalculationFragment : Fragment() {
             textView.layoutParams = params
             gridLayout.addView(textView)
         }
+    }
+
+    private fun calculateGCD(numerator: Int, denominator: Int): Int {
+        var num1 = numerator
+        var num2 = denominator
+
+        while (num2 != 0) {
+            val temp = num2
+            num2 = num1 % num2
+            num1 = temp
+        }
+
+        return num1
+    }
+
+    private fun simplifyFraction(numerator: Int, denominator: Int): Pair<Int, Int> {
+        require(numerator >= 0) { "Pay pozitif olmalı." }
+        require(denominator > 0) { "Payda pozitif olmalı." }
+
+        val gcd = calculateGCD(numerator, denominator)
+        val simplifiedNumerator = numerator / gcd
+        val simplifiedDenominator = denominator / gcd
+
+        return Pair(simplifiedNumerator, simplifiedDenominator)
     }
 }
