@@ -1,13 +1,31 @@
 <resources>
-    <string name="app_name">GearCalculationTool</string>
-    <string name="gear_teeth_number">Diş Sayısı Girin:</string>
-    <string name="ratio_of_movement">Hareket İletim Oranı:</string>
-    <string name="bottom_navigation_first_item">Divizör Hesabı</string>
-    <string name="bottom_navigation_second_item">Düz ve Helis Dişli Hesaplama</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="divisorButton">Hesapla</string>
-    <string name="spinnerFirstItem">1/40</string>
-    <string name="spinnerSecondItem">1/80</string>
-    <string name="spinnerThirdItem">1/90</string>
+    <string name="app_name">Dişli Hesaplama Aracı</string>
+
+    <!-- Divisor Calculation -->
+    <string name="gear_teeth_number">Diş Sayısı</string>
+    <string name="ratio_of_movement">Hareket Oranı</string>
+
+    <!-- Spur and Helical Gear Calculation -->
+    <string name="module">Modül</string>
+    <string name="number_of_teeth">Diş Sayısı</string>
+    <string name="pressure_angle">Basınç Açısı (°)</string>
+    <string name="helix_angle">Helis Açısı (°)</string>
+
+    <!-- Bottom Navigation -->
+    <string name="bottom_nav_divisor">Divizör</string>
+    <string name="bottom_nav_spur_helical">Düz/Helis</string>
+
+    <!-- General -->
+    <string name="calculate">Hesapla</string>
+    <string name="result_placeholder">Sonuç burada gösterilecektir</string>
+    <string name="fill_required_fields">Lütfen gerekli tüm alanları doldurun</string>
+    <string name="results">Sonuçlar</string>
+    <string name="fraction_whole">tam</string>
+
+    <!-- Result Labels -->
+    <string name="result_module">Modül</string>
+    <string name="result_number_of_teeth">Diş Sayısı</string>
+    <string name="result_pressure_angle">Basınç Açısı</string>
+    <string name="result_helix_angle">Helis Açısı</string>
+    <string name="result_not_applicable">Uygulanamaz</string>
 </resources>

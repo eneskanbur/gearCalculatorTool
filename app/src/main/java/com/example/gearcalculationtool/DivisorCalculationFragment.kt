@@ -6,45 +6,34 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
 import android.widget.GridLayout
-import android.widget.Spinner
 import android.widget.TextView
+import com.example.gearcalculationtool.databinding.FragmentDivisorCalculationBinding
 
 class DivisorCalculationFragment : Fragment() {
-    private lateinit var editTextGearTeeth: EditText
-    private lateinit var spinnerRatioOfMovement: Spinner
-    private lateinit var gridLayout: GridLayout
-    private lateinit var buttonCalculation: Button
+
+    private var _binding: FragmentDivisorCalculationBinding? = null
+    private val binding get() = _binding!!
+
     private var movementRatio: Double = 0.0
     private var gearTeethCount: Double = 0.0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-
-        return inflater.inflate(R.layout.fragment_divisor_calculation, container, false)
+    ): View {
+        _binding = FragmentDivisorCalculationBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        editTextGearTeeth = view.findViewById(R.id.editTextDivisorGearTeethNumber)
-        buttonCalculation = view.findViewById(R.id.buttonDivisorCalculation)
-        gridLayout = view.findViewById(R.id.gridLayoutDivisorCalculation)
-        spinnerRatioOfMovement = view.findViewById(R.id.spinnerDivisorRatioOfMovement)
+        setupDropdown()
 
-
-        createSpinnerOptions(spinnerRatioOfMovement)
-
-
-
-        buttonCalculation.setOnClickListener {
-            val gearTeethInput = editTextGearTeeth.text.toString()
+        binding.buttonDivisorCalculation.setOnClickListener {
+            val gearTeethInput = binding.editTextDivisorGearTeethNumber.text.toString()
             if (gearTeethInput.isNotEmpty() && movementRatio != 0.0) {
                 gearTeethCount = gearTeethInput.toDouble()
 
@@ -52,46 +41,20 @@ class DivisorCalculationFragment : Fragment() {
                 displayFractions(fractions)
             }
         }
-
     }
 
-    private fun createSpinnerOptions(spinner: Spinner) {
-        val spinnerItems = arrayOf("Seçiniz", "1/40", "1/80", "1/90")
+    private fun setupDropdown() {
+        val spinnerItems = arrayOf("1/40", "1/80", "1/90")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, spinnerItems)
+        binding.autoCompleteTextViewDivisorRatioOfMovement.setAdapter(adapter)
 
-        val adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            spinnerItems
-        )
-        spinner.adapter = adapter
-
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val selectedItem = spinnerItems[position]
-
-                when (selectedItem) {
-                    getString(R.string.spinnerFirstItem) -> {
-                        movementRatio = 40.0
-                    }
-
-                    getString(R.string.spinnerSecondItem) -> {
-                        movementRatio = 80.0
-                    }
-
-                    getString(R.string.spinnerThirdItem) -> {
-                        movementRatio = 90.0
-                    }
-
-                }
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-
+        binding.autoCompleteTextViewDivisorRatioOfMovement.setOnItemClickListener { parent, _, position, _ ->
+            val selectedItem = parent.getItemAtPosition(position) as String
+            movementRatio = when (selectedItem) {
+                "1/40" -> 40.0
+                "1/80" -> 80.0
+                "1/90" -> 90.0
+                else -> 0.0
             }
         }
     }
@@ -103,12 +66,7 @@ class DivisorCalculationFragment : Fragment() {
     ): List<Pair<Int, Int>> {
         val scaledFractions = mutableListOf<Pair<Int, Int>>()
 
-        var simplifiedNumerator = numerator
-        var simplifiedDenominator = denominator
-
-        val pair = simplifyFraction(numerator, denominator)
-        simplifiedNumerator = pair.first
-        simplifiedDenominator = pair.second
+        val (simplifiedNumerator, simplifiedDenominator) = simplifyFraction(numerator, denominator)
 
         for (i in 1..count) {
             scaledFractions.add(Pair(simplifiedNumerator * i, simplifiedDenominator * i))
@@ -116,41 +74,45 @@ class DivisorCalculationFragment : Fragment() {
         return scaledFractions
     }
 
-
-
     private fun displayFractions(fractions: List<Pair<Int, Int>>) {
-        gridLayout.removeAllViews()
-        gridLayout.rowCount = 5
-        gridLayout.columnCount = 2
+        binding.gridLayoutDivisorCalculation.removeAllViews()
+        if (fractions.isNotEmpty()) {
+            binding.textViewResultsTitle.visibility = View.VISIBLE
+            binding.gridLayoutDivisorCalculation.rowCount = 5
+            binding.gridLayoutDivisorCalculation.columnCount = 2
 
-        fractions.forEachIndexed { index, fraction ->
-            val numerator = fraction.first
-            val denominator = fraction.second
-            val wholePart = numerator / denominator
-            val remainder = numerator % denominator
+            fractions.forEachIndexed { index, fraction ->
+                val numerator = fraction.first
+                val denominator = fraction.second
+                val wholePart = numerator / denominator
+                val remainder = numerator % denominator
 
-            val fractionText = if (wholePart > 0) {
-                if (remainder > 0) "$wholePart tam $remainder/$denominator" else "$wholePart"
-            } else {
-                "$numerator/$denominator"
+                val fractionText = if (wholePart > 0) {
+                    if (remainder > 0) "$wholePart ${getString(R.string.fraction_whole)} $remainder/$denominator" else "$wholePart"
+                } else {
+                    "$numerator/$denominator"
+                }
+
+                val textView = TextView(requireContext()).apply {
+                    text = fractionText
+                    textSize = 20f
+                    setPadding(10, 10, 10, 10)
+                    gravity = Gravity.CENTER
+                }
+
+                val row = index / 2
+                val col = index % 2
+                val params =
+                    GridLayout.LayoutParams(GridLayout.spec(row, 1f), GridLayout.spec(col, 1f)).apply {
+                        width = 0
+                        height = 0
+                    }
+
+                textView.layoutParams = params
+                binding.gridLayoutDivisorCalculation.addView(textView)
             }
-
-            val textView = TextView(requireContext())
-            textView.text = fractionText
-            textView.textSize = 20f
-            textView.setPadding(10, 10, 10, 10)
-            textView.gravity = Gravity.CENTER
-
-            val row = index / 2
-            val col = index % 2
-            val params = GridLayout.LayoutParams()
-            params.rowSpec = GridLayout.spec(row, 1f)
-            params.columnSpec = GridLayout.spec(col, 1f)
-            params.width = 0
-            params.height = 0
-
-            textView.layoutParams = params
-            gridLayout.addView(textView)
+        } else {
+            binding.textViewResultsTitle.visibility = View.GONE
         }
     }
 
@@ -168,13 +130,18 @@ class DivisorCalculationFragment : Fragment() {
     }
 
     private fun simplifyFraction(numerator: Int, denominator: Int): Pair<Int, Int> {
-        require(numerator >= 0) { "Pay pozitif olmalı." }
-        require(denominator > 0) { "Payda pozitif olmalı." }
+        require(numerator >= 0) { "Numerator must be positive." }
+        require(denominator > 0) { "Denominator must be positive." }
 
         val gcd = calculateGCD(numerator, denominator)
         val simplifiedNumerator = numerator / gcd
         val simplifiedDenominator = denominator / gcd
 
         return Pair(simplifiedNumerator, simplifiedDenominator)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
