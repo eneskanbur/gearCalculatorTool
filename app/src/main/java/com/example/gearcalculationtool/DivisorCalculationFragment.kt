@@ -1,5 +1,6 @@
 package com.example.gearcalculationtool
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import androidx.fragment.app.Fragment
@@ -8,17 +9,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class DivisorCalculationFragment : Fragment() {
-    private lateinit var editTextGearTeeth: EditText
+    private lateinit var textInputLayoutGearTeeth: TextInputLayout
+    private lateinit var editTextGearTeeth: TextInputEditText
     private lateinit var spinnerRatioOfMovement: Spinner
     private lateinit var gridLayout: GridLayout
-    private lateinit var buttonCalculation: Button
+    private lateinit var buttonCalculation: MaterialButton
+    private lateinit var cardResultsSection: MaterialCardView
     private var movementRatio: Double = 0.0
     private var gearTeethCount: Double = 0.0
 
@@ -33,26 +40,67 @@ class DivisorCalculationFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        editTextGearTeeth = view.findViewById(R.id.editTextDivisorGearTeethNumber)
-        buttonCalculation = view.findViewById(R.id.buttonDivisorCalculation)
-        gridLayout = view.findViewById(R.id.gridLayoutDivisorCalculation)
-        spinnerRatioOfMovement = view.findViewById(R.id.spinnerDivisorRatioOfMovement)
+        try {
+            textInputLayoutGearTeeth = view.findViewById(R.id.textInputLayoutGearTeeth)
+            editTextGearTeeth = view.findViewById(R.id.editTextDivisorGearTeethNumber)
+            buttonCalculation = view.findViewById(R.id.buttonDivisorCalculation)
+            gridLayout = view.findViewById(R.id.gridLayoutDivisorCalculation)
+            spinnerRatioOfMovement = view.findViewById(R.id.spinnerDivisorRatioOfMovement)
+            cardResultsSection = view.findViewById(R.id.cardResultsSection)
 
+            cardResultsSection.visibility = View.GONE
 
-        createSpinnerOptions(spinnerRatioOfMovement)
+            createSpinnerOptions(spinnerRatioOfMovement)
 
-
-
-        buttonCalculation.setOnClickListener {
-            val gearTeethInput = editTextGearTeeth.text.toString()
-            if (gearTeethInput.isNotEmpty() && movementRatio != 0.0) {
-                gearTeethCount = gearTeethInput.toDouble()
-
-                val fractions = generateScaledFractions(movementRatio.toInt(), gearTeethCount.toInt(), 10)
-                displayFractions(fractions)
+            buttonCalculation.setOnClickListener {
+                performCalculation()
             }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Başlatma hatası: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun performCalculation() {
+        val gearTeethInput = editTextGearTeeth.text.toString()
+
+        textInputLayoutGearTeeth.error = null
+
+        if (gearTeethInput.isEmpty()) {
+            textInputLayoutGearTeeth.error = "Lütfen diş sayısını girin"
+            Toast.makeText(requireContext(), "Lütfen diş sayısını girin", Toast.LENGTH_SHORT).show()
+            return
         }
 
+        if (movementRatio == 0.0) {
+            Toast.makeText(requireContext(), "Lütfen hareket iletim oranını seçin", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        try {
+            gearTeethCount = gearTeethInput.toDouble()
+
+            if (gearTeethCount <= 0) {
+                textInputLayoutGearTeeth.error = "Diş sayısı pozitif olmalıdır"
+                Toast.makeText(requireContext(), "Diş sayısı pozitif olmalıdır", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val fractions = generateScaledFractions(movementRatio.toInt(), gearTeethCount.toInt(), 10)
+            displayFractions(fractions)
+
+            cardResultsSection.visibility = View.VISIBLE
+            cardResultsSection.alpha = 0f
+            cardResultsSection.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start()
+
+        } catch (e: NumberFormatException) {
+            textInputLayoutGearTeeth.error = "Geçerli bir sayı girin"
+            Toast.makeText(requireContext(), "Geçerli bir sayı girin", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Hesaplama hatası: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun createSpinnerOptions(spinner: Spinner) {
@@ -72,26 +120,16 @@ class DivisorCalculationFragment : Fragment() {
                 position: Int,
                 id: Long
             ) {
-                val selectedItem = spinnerItems[position]
-
-                when (selectedItem) {
-                    getString(R.string.spinnerFirstItem) -> {
-                        movementRatio = 40.0
-                    }
-
-                    getString(R.string.spinnerSecondItem) -> {
-                        movementRatio = 80.0
-                    }
-
-                    getString(R.string.spinnerThirdItem) -> {
-                        movementRatio = 90.0
-                    }
-
+                movementRatio = when (position) {
+                    1 -> 40.0
+                    2 -> 80.0
+                    3 -> 90.0
+                    else -> 0.0
                 }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-
+                movementRatio = 0.0
             }
         }
     }
@@ -119,38 +157,59 @@ class DivisorCalculationFragment : Fragment() {
 
 
     private fun displayFractions(fractions: List<Pair<Int, Int>>) {
-        gridLayout.removeAllViews()
-        gridLayout.rowCount = 5
-        gridLayout.columnCount = 2
+        try {
+            gridLayout.removeAllViews()
+            gridLayout.rowCount = 5
+            gridLayout.columnCount = 2
 
-        fractions.forEachIndexed { index, fraction ->
-            val numerator = fraction.first
-            val denominator = fraction.second
-            val wholePart = numerator / denominator
-            val remainder = numerator % denominator
+            fractions.forEachIndexed { index, fraction ->
+                val numerator = fraction.first
+                val denominator = fraction.second
+                val wholePart = numerator / denominator
+                val remainder = numerator % denominator
 
-            val fractionText = if (wholePart > 0) {
-                if (remainder > 0) "$wholePart tam $remainder/$denominator" else "$wholePart"
-            } else {
-                "$numerator/$denominator"
+                val fractionText = if (wholePart > 0) {
+                    if (remainder > 0) "$wholePart tam $remainder/$denominator" else "$wholePart"
+                } else {
+                    "$numerator/$denominator"
+                }
+
+                val textView = TextView(requireContext())
+                textView.text = fractionText
+                textView.textSize = 18f
+
+                val paddingPx = (16 * resources.displayMetrics.density).toInt()
+                textView.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+                textView.gravity = Gravity.CENTER
+
+                textView.setTextColor(
+                    MaterialColors.getColor(
+                        requireContext(),
+                        com.google.android.material.R.attr.colorOnSurface,
+                        Color.BLACK
+                    )
+                )
+
+                val row = index / 2
+                val col = index % 2
+                val params = GridLayout.LayoutParams()
+                params.rowSpec = GridLayout.spec(row, 1f)
+                params.columnSpec = GridLayout.spec(col, 1f)
+                params.width = 0
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT
+
+                val marginPx = (8 * resources.displayMetrics.density).toInt()
+                params.setMargins(marginPx, marginPx, marginPx, marginPx)
+
+                textView.layoutParams = params
+                gridLayout.addView(textView)
             }
 
-            val textView = TextView(requireContext())
-            textView.text = fractionText
-            textView.textSize = 20f
-            textView.setPadding(10, 10, 10, 10)
-            textView.gravity = Gravity.CENTER
+            gridLayout.requestLayout()
+            gridLayout.invalidate()
 
-            val row = index / 2
-            val col = index % 2
-            val params = GridLayout.LayoutParams()
-            params.rowSpec = GridLayout.spec(row, 1f)
-            params.columnSpec = GridLayout.spec(col, 1f)
-            params.width = 0
-            params.height = 0
-
-            textView.layoutParams = params
-            gridLayout.addView(textView)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Sonuç gösterme hatası: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
